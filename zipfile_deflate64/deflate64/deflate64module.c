@@ -17,7 +17,8 @@ typedef struct {
 static voidpf zlib_alloc(voidpf opaque, uInt items, uInt size) {
     // For safety, give zlib a zero-initialized memory block
     // Also, PyMem_Calloc call does an overflow-safe maximum size check
-    void* address = PyMem_Calloc(items, size);
+    void* address = PyMem_Malloc(items*size);
+    memset(address, 0, items*size);
     if (address == NULL) {
         // For safety, don't assume Z_NULL is the same as NULL
         return Z_NULL;
@@ -31,7 +32,8 @@ static void zlib_free(voidpf opaque, voidpf address) {
 }
 
 static int Deflate64_init(Deflate64Object* self, PyObject* args, PyObject* kwds) {
-    self->strm = PyMem_Calloc(1, sizeof(z_stream));
+    self->strm = PyMem_Malloc(sizeof(z_stream));
+    memset(self->strm, 0, sizeof(z_stream));
     if (self->strm == NULL) {
         PyErr_NoMemory();
         return -1;
@@ -137,7 +139,13 @@ static PyObject* Deflate64_decompress(Deflate64Object* self, PyObject *args) {
     PyObject* ret = NULL;
 
     Py_buffer input_buffer;
-    if (!PyArg_ParseTuple(args, "y*", &input_buffer)) {
+    if (!PyArg_ParseTuple(args,
+#if PY_MAJOR_VERSION >= 3
+      "y*",
+#else
+      "z*",
+#endif
+      &input_buffer)) {
         return NULL;
     }
 
@@ -223,30 +231,45 @@ static PyTypeObject Deflate64_type = {
     .tp_methods = Deflate64_methods,
 };
 
+#if PY_MAJOR_VERSION >= 3
 static PyModuleDef deflate64_module = {
     PyModuleDef_HEAD_INIT,
     .m_name = "deflate64",
     .m_doc = "Python access to zlib's infback9 extension for Deflate64 decompression.",
     .m_size = -1,
 };
+#endif
 
-PyMODINIT_FUNC PyInit_deflate64(void) {
+#if PY_MAJOR_VERSION >= 3
+#define INITERROR return NULL
+PyMODINIT_FUNC PyInit_deflate64(void)
+#else
+#define INITERROR return
+PyMODINIT_FUNC initdeflate64(void)
+#endif
+{
+#if PY_MAJOR_VERSION >= 3
     PyObject* m = PyModule_Create(&deflate64_module);
+#else
+    PyObject* m = Py_InitModule("deflate64", NULL);
+#endif
+
     if (m == NULL) {
-        return NULL;
+        INITERROR;
     }
 
     if (PyType_Ready(&Deflate64_type) < 0) {
         Py_DECREF(m);
-        return NULL;
+        INITERROR;
     }
 
     Py_INCREF(&Deflate64_type);
     if (PyModule_AddObject(m, "Deflate64", (PyObject*) &Deflate64_type) < 0) {
         Py_DECREF(&Deflate64_type);
         Py_DECREF(m);
-        return NULL;
+        INITERROR;
     }
-
+#if PY_MAJOR_VERSION >= 3
     return m;
+#endif
 }

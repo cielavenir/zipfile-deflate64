@@ -1,7 +1,12 @@
 # isort: skip_file
 
 # Has the side effect of applying patches
-from . import _zipfile  # noqa: F401
+try:
+    from . import _zipfile  # noqa: F401
+except (ImportError, SyntaxError):
+    # allow anyway to allow zipfile39
+    import zipfile
+    zipfile.ZIP_DEFLATED64 = 9
 
 # Re-export everything, so this can be used in place of zipfile
 from zipfile import *  # noqa: F401, F403

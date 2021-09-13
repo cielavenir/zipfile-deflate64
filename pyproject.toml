@@ -1,5 +1,7 @@
 [build-system]
-requires = ["setuptools >= 42", "wheel", "setuptools-scm[toml]>=3.4"]
+requires = ["setuptools >= 42", "wheel", "setuptools-scm[toml]>=3.4",
+            "pathlib2; python_version < '3'",
+           ]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
