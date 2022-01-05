@@ -28,13 +28,25 @@ def test_decompress_content(data_dir, deflate64, content_file_name):
     with open(data_dir / content_file_name, 'rb') as compressed_content_stream:
         decompressed_content = deflate64.decompress(compressed_content_stream.read())
 
-    assert re.match(r'^(?:Sample content \d+\.\n)+$', decompressed_content.decode())
+    assert re.match(rb'^(?:Sample content \d+\.\n)+$', decompressed_content)
 
 
 def test_decompress_output_type(data_dir, deflate64):
     with open(data_dir / '10_lines.deflate64', 'rb') as compressed_content_stream:
         decompressed_content = deflate64.decompress(compressed_content_stream.read())
     assert isinstance(decompressed_content, bytes)
+
+
+def test_decompress_repeated(data_dir, deflate64):
+    """Ensure that resources are properly shared by repeated invocations of Deflate64.decompress."""
+    with open(data_dir / '10_lines.deflate64', 'rb') as compressed_content_stream:
+        decompressed_content_10 = deflate64.decompress(compressed_content_stream.read())
+
+    with open(data_dir / '100_lines.deflate64', 'rb') as compressed_content_stream:
+        decompressed_content_100 = deflate64.decompress(compressed_content_stream.read())
+
+    assert len(decompressed_content_10) == 180
+    assert len(decompressed_content_100) == 1890
 
 
 def test_decompress_empty(deflate64):
