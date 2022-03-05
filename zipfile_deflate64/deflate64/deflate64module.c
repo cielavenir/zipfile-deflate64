@@ -49,7 +49,7 @@ static int Deflate64_init(Deflate64Object* self, PyObject* args, PyObject* kwds)
         return -1;
     }
 
-    int err = inflateBack9Init(self->strm, (unsigned char*) PyBytes_AS_STRING(self->window_buffer));
+    int err = inflate9Init(self->strm, (unsigned char*) PyBytes_AS_STRING(self->window_buffer));
     switch (err) {
         case Z_OK:
             // Success
@@ -76,7 +76,7 @@ static int Deflate64_init(Deflate64Object* self, PyObject* args, PyObject* kwds)
 
 static void Deflate64_dealloc(Deflate64Object* self) {
     if (self->strm != NULL) {
-        int err = inflateBack9End(self->strm);
+        int err = inflate9End(self->strm);
         switch (err) {
             case Z_OK:
                 // Success
@@ -116,21 +116,25 @@ static PyObject* Deflate64_decompress(Deflate64Object* self, PyObject *args) {
         return NULL;
     }
 
-	const int bufsize = 2048;
-	Bytef next_out[bufsize];
-	self->strm->avail_out = 0;
+    const int bufsize = 2048;
+    Bytef next_out[bufsize];
+    self->strm->avail_out = 0;
     self->strm->next_in = input_buffer.buf;
     self->strm->avail_in = (uInt) input_buffer.len;
 
-	for(;;){
-	if(self->strm->avail_out==0){
-		self->strm->avail_out=bufsize;
-		self->strm->next_out=next_out;
-	}
-	int prev_avail_in = self->strm->avail_in;
-	Bytef *prev_next_out = self->strm->next_out;
-    int err = inflateBack9(self->strm);
+    for(;;){
+    if(self->strm->avail_out==0){
+        self->strm->avail_out=bufsize;
+        self->strm->next_out=next_out;
+    }
+    int prev_avail_out = self->strm->avail_out;
+    Bytef *prev_next_out = self->strm->next_out;
+    Bytef *prev_next_in = self->strm->next_in;
+    int err = inflate9(self->strm);
     switch (err) {
+        case Z_OK:
+            // Success
+            break;
         case Z_STREAM_END:
             // Success
             self->eof = 1;
@@ -163,9 +167,10 @@ static PyObject* Deflate64_decompress(Deflate64Object* self, PyObject *args) {
             PyErr_BadInternalCall();
             goto error;
     }
-	if(self->strm->avail_in==0 && prev_next_out==self->strm->next_out)break;
+    if(prev_next_in==self->strm->next_in && prev_next_out==self->strm->next_out)break;
 
-	int len = prev_avail_in - self->strm->avail_in;
+    int len = prev_avail_out - self->strm->avail_out;
+    if(len){
     // Concatenate buf onto self->output_buffer
     Py_ssize_t old_output_size = PyBytes_GET_SIZE(self->output_buffer);
 
@@ -183,8 +188,8 @@ static PyObject* Deflate64_decompress(Deflate64Object* self, PyObject *args) {
     }
 #endif
 
-    err = _PyBytes_Resize(&self->output_buffer, old_output_size + len);
-    if (err < 0) {
+    int err2 = _PyBytes_Resize(&self->output_buffer, old_output_size + len);
+    if (err2 < 0) {
         // MemoryError is set, and output_buffer is deallocated and set to NULL
         goto error;
     }
@@ -192,7 +197,9 @@ static PyObject* Deflate64_decompress(Deflate64Object* self, PyObject *args) {
     char* output_dest = PyBytes_AS_STRING(self->output_buffer) + old_output_size;
 
     memcpy(output_dest, prev_next_out, len);
-	}
+    }
+    if(err==Z_STREAM_END)break;
+    }
 
     // This method returns a new reference to output_buffer
     Py_INCREF(self->output_buffer);
