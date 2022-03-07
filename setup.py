@@ -55,6 +55,7 @@ setup(
                 'zlib',
                 'zlib/contrib/infback9',
             ],
+            extra_compile_args=['-O2'],
         ),
     ],
 )
