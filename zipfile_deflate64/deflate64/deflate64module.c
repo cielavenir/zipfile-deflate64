@@ -203,11 +203,11 @@ error:
 
 static PyMemberDef Deflate64_members[] = {
     {
-        .name = "eof",
-        .type = T_BOOL,
-        .offset = offsetof(Deflate64Object, eof),
-        .flags = READONLY,
-        .doc = "end of file"
+        "eof",
+        T_BOOL,
+        offsetof(Deflate64Object, eof),
+        READONLY,
+        "end of file"
     },
     {NULL}
 };
@@ -219,15 +219,43 @@ static PyMethodDef Deflate64_methods[] = {
 
 static PyTypeObject Deflate64_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "zipfile_deflate64.deflate64.Deflate64",
-    .tp_doc = "An object for Deflate64 decompression.",
-    .tp_basicsize = sizeof(Deflate64Object),
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_new = PyType_GenericNew,
-    .tp_init = (initproc) Deflate64_init,
-    .tp_dealloc = (destructor) Deflate64_dealloc,
-    .tp_members = Deflate64_members,
-    .tp_methods = Deflate64_methods,
+    "zipfile_deflate64.deflate64.Deflate64",
+    sizeof(Deflate64Object),
+    0,
+    (destructor) Deflate64_dealloc,
+    0,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    Py_TPFLAGS_DEFAULT,
+    "An object for Deflate64 decompression.",
+    NULL,
+    NULL,
+    NULL,
+    0,
+    NULL,
+    NULL,
+    Deflate64_methods,
+    Deflate64_members,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    0,
+    (initproc) Deflate64_init,
+    NULL,
+    PyType_GenericNew,
 };
 
 #if PY_MAJOR_VERSION >= 3
