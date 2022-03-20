@@ -32,6 +32,7 @@ static void zlib_free(voidpf opaque, voidpf address) {
 }
 
 static int Deflate64_init(Deflate64Object* self, PyObject* args, PyObject* kwds) {
+	int err = -1;
     self->strm = PyMem_Malloc(sizeof(z_stream));
     memset(self->strm, 0, sizeof(z_stream));
     if (self->strm == NULL) {
@@ -49,7 +50,7 @@ static int Deflate64_init(Deflate64Object* self, PyObject* args, PyObject* kwds)
         return -1;
     }
 
-    int err = inflate9Init(self->strm, (unsigned char*) PyBytes_AS_STRING(self->window_buffer));
+    err = inflate9Init(self->strm, (unsigned char*) PyBytes_AS_STRING(self->window_buffer));
     switch (err) {
         case Z_OK:
             // Success
@@ -96,6 +97,7 @@ static void Deflate64_dealloc(Deflate64Object* self) {
 }
 
 static PyObject* Deflate64_decompress(Deflate64Object* self, PyObject *args) {
+	int err = -1;
     PyObject* ret = NULL;
 
     Py_buffer input_buffer;
@@ -134,7 +136,7 @@ static PyObject* Deflate64_decompress(Deflate64Object* self, PyObject *args) {
     int prev_avail_out = self->strm->avail_out;
     Bytef *prev_next_out = self->strm->next_out;
     Bytef *prev_next_in = self->strm->next_in;
-    int err = inflate9(self->strm);
+    err = inflate9(self->strm);
     switch (err) {
         case Z_OK:
             // Success
