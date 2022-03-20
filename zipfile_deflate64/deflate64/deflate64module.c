@@ -97,6 +97,9 @@ static void Deflate64_dealloc(Deflate64Object* self) {
 }
 
 static PyObject* Deflate64_decompress(Deflate64Object* self, PyObject *args) {
+    const int bufsize = 2048;
+    Bytef next_out[bufsize];
+	size_t total_out = 0;
 	int err = -1;
     PyObject* ret = NULL;
 
@@ -121,9 +124,6 @@ static PyObject* Deflate64_decompress(Deflate64Object* self, PyObject *args) {
     PyThreadState *_save;
     _save = PyEval_SaveThread();
 
-    size_t total_out = 0;
-    const int bufsize = 2048;
-    Bytef next_out[bufsize];
     self->strm->avail_out = 0;
     self->strm->next_in = input_buffer.buf;
     self->strm->avail_in = (uInt) input_buffer.len;
