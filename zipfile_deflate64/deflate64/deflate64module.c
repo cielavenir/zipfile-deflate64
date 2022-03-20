@@ -96,12 +96,17 @@ static void Deflate64_dealloc(Deflate64Object* self) {
     Py_TYPE(self)->tp_free((PyObject*) self);
 }
 
+#define bufsize 2048
 static PyObject* Deflate64_decompress(Deflate64Object* self, PyObject *args) {
-    const int bufsize = 2048;
     Bytef next_out[bufsize];
 	size_t total_out = 0;
 	int err = -1;
     PyObject* ret = NULL;
+    char *output_buffer = NULL;
+    int prev_avail_out = 0;
+    Bytef *prev_next_out = NULL;
+    Bytef *prev_next_in = NULL;
+    PyThreadState *_save = NULL;
 
     Py_buffer input_buffer;
     if (!PyArg_ParseTuple(args,
@@ -121,7 +126,6 @@ static PyObject* Deflate64_decompress(Deflate64Object* self, PyObject *args) {
         return NULL;
     }
 
-    PyThreadState *_save;
     _save = PyEval_SaveThread();
 
     self->strm->avail_out = 0;
@@ -133,9 +137,9 @@ static PyObject* Deflate64_decompress(Deflate64Object* self, PyObject *args) {
         self->strm->avail_out=bufsize;
         self->strm->next_out=next_out;
     }
-    int prev_avail_out = self->strm->avail_out;
-    Bytef *prev_next_out = self->strm->next_out;
-    Bytef *prev_next_in = self->strm->next_in;
+    prev_avail_out = self->strm->avail_out;
+    prev_next_out = self->strm->next_out;
+    prev_next_in = self->strm->next_in;
     err = inflate9(self->strm);
     switch (err) {
         case Z_OK:
