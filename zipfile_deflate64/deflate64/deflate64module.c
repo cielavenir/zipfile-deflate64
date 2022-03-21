@@ -261,9 +261,9 @@ static PyTypeObject Deflate64_type = {
 #if PY_MAJOR_VERSION >= 3
 static PyModuleDef deflate64_module = {
     PyModuleDef_HEAD_INIT,
-    .m_name = "deflate64",
-    .m_doc = "Python access to zlib's infback9 extension for Deflate64 decompression.",
-    .m_size = -1,
+    "deflate64",
+    "Python access to zlib's infback9 extension for Deflate64 decompression.",
+    -1,
 };
 #endif
 
