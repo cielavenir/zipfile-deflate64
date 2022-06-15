@@ -60,10 +60,8 @@ jobs:
         if: ${{ matrix.os != 'ubuntu-latest' }}
         run: |
           pyproject-build --wheel
-      - name: Publish to PyPI
-        env:
-          TWINE_USERNAME: "__token__"
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-          TWINE_NON_INTERACTIVE: "true"
-        run: |
-          tox -e release
+      - name: Upload wheel
+        uses: actions/upload-artifact@v2
+        with:
+          name: wheel
+          path: dist
